@@ -1,11 +1,8 @@
 pipeline {
     agent any
 
-    parameters {
-        choice(name: 'DEPLOY_ENV', choices: ['staging', 'production'], description: 'Choose deployment environment')
-    }
-
     environment {
+        DEPLOY_ENV = 'staging' // Change to 'production' if needed
         IMAGE_NAME = 'your-dockerhub-username/flask-app'
         IMAGE_TAG = "build-${env.BUILD_NUMBER}"
         SLACK_COLOR_SUCCESS = '#00FF00'
@@ -83,10 +80,10 @@ pipeline {
         stage('Deploy Container') {
             steps {
                 script {
-                    slackSend(color: SLACK_COLOR_DEFAULT, message: "🚀 *Deploy to ${params.DEPLOY_ENV}* started.")
+                    slackSend(color: SLACK_COLOR_DEFAULT, message: "🚀 *Deploy to ${DEPLOY_ENV}* started.")
 
-                    def containerName = (params.DEPLOY_ENV == 'production') ? PROD_CONTAINER : STAGING_CONTAINER
-                    def port = (params.DEPLOY_ENV == 'production') ? '5000:5000' : '5001:5000'
+                    def containerName = (DEPLOY_ENV == 'production') ? PROD_CONTAINER : STAGING_CONTAINER
+                    def port = (DEPLOY_ENV == 'production') ? '5000:5000' : '5001:5000'
 
                     if (isUnix()) {
                         sh """
@@ -102,7 +99,7 @@ pipeline {
                         """
                     }
 
-                    slackSend(color: SLACK_COLOR_SUCCESS, message: "✅ *Deployment to ${params.DEPLOY_ENV}* completed.")
+                    slackSend(color: SLACK_COLOR_SUCCESS, message: "✅ *Deployment to ${DEPLOY_ENV}* completed.")
                 }
             }
         }
@@ -113,10 +110,10 @@ pipeline {
             slackSend(color: '#FFFF00', message: "🟡 Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' finished. Check: ${env.BUILD_URL}")
         }
         success {
-            slackSend(color: SLACK_COLOR_SUCCESS, message: "✅ Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' succeeded on *${params.DEPLOY_ENV}*!")
+            slackSend(color: SLACK_COLOR_SUCCESS, message: "✅ Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' succeeded on *${DEPLOY_ENV}*!")
         }
         failure {
-            slackSend(color: SLACK_COLOR_FAIL, message: "❌ Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' failed during *${params.DEPLOY_ENV}* deployment!")
+            slackSend(color: SLACK_COLOR_FAIL, message: "❌ Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]' failed during *${DEPLOY_ENV}* deployment!")
         }
     }
 }
